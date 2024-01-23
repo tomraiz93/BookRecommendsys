@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Book Recommender System</title>
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap.min.css"
+        integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <style>
+        body {
+            background-color: white; /* Màu nền chuyển sang trắng */
+        }
+
+        .navbar {
+            background-color: #1DB954; /* Màu xanh Spotify */
+        }
+
+        .navbar a {
+            color: white; /* Màu chữ trắng */
+        }
+
+        .card {
+            background-color: #d4edda; /* Màu xanh lá nhạt cho thẻ card */
+            border: 1px solid #c3e6cb; /* Đường viền nhẹ */
+            margin-bottom: 20px; /* Khoảng cách giữa các thẻ card */
+        }
+
+        .card-body {
+            color: black; /* Màu chữ đen trong card */
+            text-align: center; /* Căn giữa nội dung */
+        }
+
+        .card img {
+            max-height: 200px; /* Độ cao tối đa của ảnh */
+            margin-bottom: 10px; /* Khoảng cách giữa ảnh và văn bản */
+        }
+
+        .card p {
+            font-size: 18px; /* Kích thước chữ cho tên sách */
+        }
+
+        .card h4 {
+            font-size: 16px; /* Kích thước chữ cho tác giả */
+        }
+
+        .favorite-button {
+            margin-top: 10px;
+        }
+
+        /* Thêm phần CSS cho ô chọn */
+        .select-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .select-option {
+            margin: 0 10px;
+        }
+
+        .form-container {
+            margin-top: 20px;
+        }
+
+        .form-container input {
+            margin-right: 10px;
+        }
+
+        /* Hide the favorite list initially */
+        #favorite-list {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <a class="navbar-brand" href="/">My Book recommender</a>
+        <ul class="nav navbar-nav">
+            <li><a href="/">Home</a></li>
+            <li><a href="/recommend">Recommend</a></li>
+            <li><a href="#" onclick="showFavorites()">My Favourite List</a></li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <h1 style="font-size:50px">Recommend Books</h1>
+
+                <!-- Thêm ô chọn -->
+                <div class="select-container">
+                    <div class="select-option">
+                        <input type="radio" id="choose-book" name="choose-option" value="book" checked>
+                        <label for="choose-book">Recommend by Book</label>
+                    </div>
+                    <div class="select-option">
+                        <input type="radio" id="choose-author" name="choose-option" value="author">
+<label for="choose-author">Recommend by Author</label>
+                    </div>
+                </div>
+
+                <!-- Form nhập thông tin và submit -->
+                <div class="form-container">
+                    <form action="/recommend_books" method="post">
+                        <input name="user_input" type="text" class="form-control" placeholder="Enter book or author"><br>
+                        <input type="submit" class="btn btn-lg btn-warning">
+                    </form>
+                </div>
+            </div>
+
+            <!-- Favorite List Section -->
+            <div class="col-md-12" id="favorite-list">
+                <h1 style="font-size:50px">My Favourite List</h1>
+                <!-- You can dynamically load the favorite list content here using JavaScript -->
+            </div>
+
+            {% if data %}
+            <div class="row">
+                {% for book_list in data %}
+                {% for book in book_list %}
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <img class="card-img-top" src="{{book[2]}}" alt="{{book[0]}}">
+                            <p>{{book[0]}}</p>
+                            <h4>{{book[1]}}</h4>
+                            <button class="btn btn-success favorite-button"
+                                onclick="addToFavorites('{{ book[0] }}', '{{ book[1] }}')">+</button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                {% endfor %}
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+               
+
+
+
+    <!-- Latest compiled JavaScript -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/js/bootstrap.min.js"
+        integrity="sha384-r5ihLWNlSvGA0XkgTs0X6Qiaa4FCqf9z7H6fQSjslF/5e6JG8ViJQIblGUimsk7u"
+        crossorigin="anonymous"></script>
+
+    <script>
+        function addToFavorites(bookName, author) {
+            // Kiểm tra xem localStorage có tồn tại không
+            if (typeof(Storage) !== "undefined") {
+                // Lấy danh sách sách yêu thích từ localStorage
+                var favorites = JSON.parse(localStorage.getItem("favorites")) || [];
+
+                // Kiểm tra xem sách đã tồn tại trong danh sách yêu thích chưa
+                var isDuplicate = favorites.some(function (book) {
+                    return book.name === bookName && book.author === author;
+                });
+
+                // Nếu sách chưa tồn tại trong danh sách yêu thích, thêm vào
+                if (!isDuplicate) {
+                    favorites.push({ name: bookName, author: author });
+// Lưu danh sách yêu thích vào localStorage
+                    localStorage.setItem("favorites", JSON.stringify(favorites));
+                    alert('Book added to My Favourite List: ' + bookName + ' by ' + author);
+                } else {
+                    alert('Book is already in My Favourite List: ' + bookName + ' by ' + author);
+                }
+            } else {
+                alert('Sorry, your browser does not support web storage. Unable to add to favorites.');
+            }
+        }
+        
+
+    </script>
+
+</body>
+
+</html>
